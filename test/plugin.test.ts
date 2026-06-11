@@ -698,14 +698,13 @@ describe("WorkflowPlugin", () => {
   // ═══════════════════════════════════════════════════════
 
   test("resolveWorkflowFile finds .yaml files", () => {
-    // Test with the sample we know exists in .agents/
-    const resolved = resolveWorkflowFile("deploy-feature", "C:\\Users\\rx\\001_Code\\201_QuickP\\opencode-plugins")
+    const resolved = resolveWorkflowFile("deploy-feature")
     expect(resolved).toBeTruthy()
     expect(resolved).toContain("deploy-feature")
   })
 
   test("resolveWorkflowFile adds .yaml extension", () => {
-    const resolved = resolveWorkflowFile("deploy-feature", "C:\\Users\\rx\\001_Code\\201_QuickP\\opencode-plugins")
+    const resolved = resolveWorkflowFile("deploy-feature")
     expect(resolved).toBeTruthy()
     expect(resolved).toContain(".yaml")
   })
@@ -720,7 +719,7 @@ describe("WorkflowPlugin", () => {
   })
 
   test("listWorkflowFiles returns filenames", () => {
-    const files = listWorkflowFiles("C:\\Users\\rx\\001_Code\\201_QuickP\\opencode-plugins")
+    const files = listWorkflowFiles()
     expect(files).toContain("deploy-feature.yaml")
   })
 })
