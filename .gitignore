@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build & type-checking
+dist/
+*.tsbuildinfo
+.vite/
+
+# Testing
+coverage/
+
+# OpenCode
+.opencode/
+
+# Project-specific
+memory/
+private/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

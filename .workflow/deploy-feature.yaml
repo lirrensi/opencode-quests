@@ -1,0 +1,34 @@
+kind: workflow
+name: Deploy Feature
+description: "Ship a feature safely: plan → implement → verify"
+
+stages:
+  - id: plan
+    instruction: >
+      Read the ticket/issue. Understand what needs to change.
+      List every file you expect to touch. State your approach.
+      NO coding yet — planning only.
+    checklist:
+      - "Ticket requirements understood"
+      - "Affected files listed"
+      - "Approach clear"
+    next: implement
+
+  - id: implement
+    instruction: >
+      Write the code. Only what was planned. No scope creep.
+      If you discover something beyond the plan, note it but don't touch it.
+    checklist:
+      - "All planned files modified"
+      - "No unplanned files touched"
+      - "Code compiles"
+    next: verify
+
+  - id: verify
+    instruction: >
+      Run tests. Review every change one more time.
+      Would you approve this PR from a colleague?
+    checklist:
+      - "All tests pass"
+      - "No debug code left"
+      - "Self-review passed"

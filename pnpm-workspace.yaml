@@ -1,0 +1,5 @@
+allowBuilds:
+  msgpackr-extract: true
+
+minimumReleaseAgeExclude:
+  - "@opencode-ai/*"
