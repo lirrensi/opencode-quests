@@ -12,7 +12,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, "..")
 const src = resolve(root, "src", "index.ts")
 const pluginsDir = resolve(homedir(), ".config", "opencode", "plugins")
-const dest = resolve(pluginsDir, "opencode-workflows.ts")
+const dest = resolve(pluginsDir, "opencode-quests.ts")
 
 if (!existsSync(pluginsDir)) mkdirSync(pluginsDir, { recursive: true })
 
@@ -21,7 +21,7 @@ const lines = content.split("\n")
 const stripped = lines.filter(line => {
   const t = line.trim()
   if (!t.startsWith("export ")) return true
-  if (t.startsWith("export const WorkflowPlugin")) return true
+  if (t.startsWith("export const QuestPlugin")) return true
   return false
 })
 

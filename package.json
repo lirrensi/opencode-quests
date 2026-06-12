@@ -1,20 +1,22 @@
 {
-    "name": "opencode-workflows",
-    "version": "0.1.0",
+    "name": "opencode-quests",
+    "version": "0.2.0",
     "type": "module",
-    "description": "Workflow prison for OpenCode — linear stage enforcement via TUI injection + idle-driven re-fire",
+    "description": "Quest engine for OpenCode — labeled multi-next branching + persistent context via TUI injection + idle-driven re-fire",
     "main": "./src/index.ts",
     "keywords": [
         "opencode",
         "opencode-plugin",
         "plugin",
+        "quest",
         "workflow",
         "stages",
-        "state-machine"
+        "state-machine",
+        "branching"
     ],
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/lirrensi/opencode-workflows.git"
+        "url": "git+https://github.com/lirrensi/opencode-quests.git"
     },
     "license": "MIT",
     "files": [

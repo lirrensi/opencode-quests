@@ -1,9 +1,15 @@
-kind: workflow
+kind: quest
 name: Deploy Feature
 description: "Ship a feature safely: plan → implement → verify"
+context: >
+  Repo: opencode-plugins. Branch: feature branch.
+  CI: ~5min via GitHub Actions. Main is the release branch.
+  Key files: src/index.ts, src/test-helpers.ts.
 
 stages:
   - id: plan
+    description: "Understand the problem space"
+    context: "Planning phase — analysis only, no coding."
     instruction: >
       Read the ticket/issue. Understand what needs to change.
       List every file you expect to touch. State your approach.
@@ -12,9 +18,12 @@ stages:
       - "Ticket requirements understood"
       - "Affected files listed"
       - "Approach clear"
-    next: implement
+    next:
+      proceed: implement
+      rethink: plan
 
   - id: implement
+    description: "Write the actual code"
     instruction: >
       Write the code. Only what was planned. No scope creep.
       If you discover something beyond the plan, note it but don't touch it.
@@ -22,9 +31,12 @@ stages:
       - "All planned files modified"
       - "No unplanned files touched"
       - "Code compiles"
-    next: verify
+    next:
+      done: verify
+      fix: plan
 
   - id: verify
+    description: "Validate everything works"
     instruction: >
       Run tests. Review every change one more time.
       Would you approve this PR from a colleague?

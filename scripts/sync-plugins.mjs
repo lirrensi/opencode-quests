@@ -11,15 +11,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, "..")
 
 const PLUGIN_DIR = resolve(root, ".opencode", "plugins")
-const PLUGIN_FILE = resolve(PLUGIN_DIR, "opencode-workflows.ts")
+const PLUGIN_FILE = resolve(PLUGIN_DIR, "opencode-quests.ts")
 
 const RE_EXPORT_CONTENT = `/**
- * opencode-workflows — linear stage enforcement plugin
+ * opencode-quests — labeled multi-next branching + persistent context
  *
  * OpenCode auto-loads .ts files from its plugins directory.
  * This file re-exports the plugin from the project source.
  */
-export { WorkflowPlugin, default } from "../../src/index"
+export { QuestPlugin, default } from "../../src/index"
 `
 
 if (!existsSync(PLUGIN_DIR)) {
