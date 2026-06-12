@@ -209,11 +209,13 @@ function getCurrentStage(state: QuestState): Stage | undefined {
 function getValidNext(state: QuestState): string[] {
   const stage = getCurrentStage(state)
   if (!stage?.next) return ["done"]
+  if (typeof stage.next === "string") return [stage.next]
   return Object.values(stage.next)
 }
 
 function getNextLabels(state: QuestState): Record<string, string> | undefined {
-  return getCurrentStage(state)?.next
+  const next = getCurrentStage(state)?.next
+  return typeof next === "string" ? undefined : next
 }
 
 function isValidTransition(state: QuestState, targetId: string): boolean {
