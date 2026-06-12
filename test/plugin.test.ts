@@ -466,14 +466,13 @@ describe("QuestPlugin", () => {
     const hooks = await QuestPlugin({ client } as any)
     expect(hooks).toHaveProperty("config")
     expect(hooks).toHaveProperty("tool")
-    expect(hooks.tool).toHaveProperty("quest_load")
+    expect(hooks.tool).toHaveProperty("quest")
     expect(hooks.tool).toHaveProperty("quest_advance")
-    expect(hooks.tool).toHaveProperty("create_quest")
     expect(hooks).toHaveProperty("event")
     expect(hooks).toHaveProperty("command.execute.before")
   })
 
-  test("create_quest creates a valid quest", async () => {
+  test("quest creates a valid quest", async () => {
     const { QuestPlugin } = await import("../src/index")
     const toasts: any[] = []
 
@@ -487,7 +486,7 @@ describe("QuestPlugin", () => {
     }
 
     const hooks = await QuestPlugin({ client } as any)
-    const result = await hooks.tool.create_quest.execute({
+    const result = await hooks.tool.quest.execute({
       schema: {
         kind: "quest",
         name: "Inline Quest",
@@ -511,7 +510,7 @@ describe("QuestPlugin", () => {
     }
     const hooks = await QuestPlugin({ client } as any)
 
-    const result = await hooks.tool.create_quest.execute({
+    const result = await hooks.tool.quest.execute({
       schema: { kind: "quest" }, // missing name and stages
     })
     expect(typeof result).toBe("string")
@@ -527,6 +526,7 @@ describe("QuestPlugin", () => {
 
     const result = await hooks.tool.quest_advance.execute({ stage: "anything" })
     expect(result).toContain("No active quest")
+    expect(result).toContain("quest()")
   })
 
   test("quest_advance validates transitions", async () => {
@@ -537,7 +537,7 @@ describe("QuestPlugin", () => {
     const hooks = await QuestPlugin({ client } as any)
 
     // Create a quest with 2 stages
-    await hooks.tool.create_quest.execute({
+    await hooks.tool.quest.execute({
       schema: {
         kind: "quest", name: "Test",
         stages: [
@@ -571,7 +571,7 @@ describe("QuestPlugin", () => {
     }
     const hooks = await QuestPlugin({ client } as any)
 
-    await hooks.tool.create_quest.execute({
+    await hooks.tool.quest.execute({
       schema: { kind: "quest", name: "Done Test", stages: [{ id: "only" }] },
     })
 
@@ -599,7 +599,7 @@ describe("QuestPlugin", () => {
     const hooks = await QuestPlugin({ client } as any)
 
     // Start a quest
-    await hooks.tool.create_quest.execute({
+    await hooks.tool.quest.execute({
       schema: { kind: "quest", name: "Status Test", stages: [{ id: "s1" }] },
     })
 
@@ -645,7 +645,7 @@ describe("QuestPlugin", () => {
     }
     const hooks = await QuestPlugin({ client } as any)
 
-    await hooks.tool.create_quest.execute({
+    await hooks.tool.quest.execute({
       schema: { kind: "quest", name: "Stop Test", stages: [{ id: "s1" }] },
     })
 
@@ -673,7 +673,7 @@ describe("QuestPlugin", () => {
     }
     const hooks = await QuestPlugin({ client } as any)
 
-    await hooks.tool.create_quest.execute({
+    await hooks.tool.quest.execute({
       schema: { kind: "quest", name: "Session Test", stages: [{ id: "s1" }] },
     })
 
@@ -715,7 +715,7 @@ describe("QuestPlugin", () => {
     }
     const hooks = await QuestPlugin({ client } as any)
 
-    await hooks.tool.create_quest.execute({
+    await hooks.tool.quest.execute({
       schema: { kind: "quest", name: "Event Test", stages: [{ id: "s1" }] },
     })
 
@@ -735,7 +735,7 @@ describe("QuestPlugin", () => {
     }
     const hooks = await QuestPlugin({ client } as any)
 
-    await hooks.tool.create_quest.execute({
+    await hooks.tool.quest.execute({
       schema: { kind: "quest", name: "Idle Test", stages: [{ id: "s1" }] },
     })
 
@@ -760,7 +760,7 @@ describe("QuestPlugin", () => {
     }
     const hooks = await QuestPlugin({ client } as any)
 
-    await hooks.tool.create_quest.execute({
+    await hooks.tool.quest.execute({
       schema: { kind: "quest", name: "Pause Test", stages: [{ id: "s1" }] },
     })
 
@@ -784,7 +784,7 @@ describe("QuestPlugin", () => {
     }
     const hooks = await QuestPlugin({ client } as any)
 
-    await hooks.tool.create_quest.execute({
+    await hooks.tool.quest.execute({
       schema: { kind: "quest", name: "Double Pause", stages: [{ id: "s1" }] },
     })
 
@@ -811,7 +811,7 @@ describe("QuestPlugin", () => {
     }
     const hooks = await QuestPlugin({ client } as any)
 
-    await hooks.tool.create_quest.execute({
+    await hooks.tool.quest.execute({
       schema: { kind: "quest", name: "Resume Test", stages: [{ id: "s1" }] },
     })
 
@@ -845,7 +845,7 @@ describe("QuestPlugin", () => {
     }
     const hooks = await QuestPlugin({ client } as any)
 
-    await hooks.tool.create_quest.execute({
+    await hooks.tool.quest.execute({
       schema: { kind: "quest", name: "Not Paused", stages: [{ id: "s1" }] },
     })
 
@@ -869,7 +869,7 @@ describe("QuestPlugin", () => {
     }
     const hooks = await QuestPlugin({ client } as any)
 
-    await hooks.tool.create_quest.execute({
+    await hooks.tool.quest.execute({
       schema: { kind: "quest", name: "Advance Unpause", stages: [
         { id: "a", next: "b" },
         { id: "b" },

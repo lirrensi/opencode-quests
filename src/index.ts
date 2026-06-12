@@ -64,6 +64,32 @@ function resolveQuestFile(file: string): string | null {
   return null
 }
 
+function resolveQuestByName(name: string): { quest: Quest; path: string } | string {
+  const dir = join(process.cwd(), AGENTS_DIR)
+  if (!existsSync(dir)) return `No quest found with name "${name}". (${AGENTS_DIR}/ doesn't exist)`
+
+  const files: string[] = []
+  try { files.push(...readdirSync(dir)) } catch { return `Cannot read ${AGENTS_DIR}/.` }
+
+  const yamlFiles = files.filter(f => (f.endsWith(".yaml") || f.endsWith(".yml")) && !f.includes(".."))
+  const target = name.trim().toLowerCase()
+
+  for (const file of yamlFiles) {
+    const fullPath = join(dir, file)
+    try {
+      const content = readFileSync(fullPath, "utf8")
+      const doc = parseYaml(content)
+      if (doc && doc.kind === "quest" && typeof doc.name === "string" && doc.name.trim().toLowerCase() === target) {
+        const result = validateQuestSchema(doc)
+        if (typeof result === "string") continue
+        return { quest: result, path: fullPath }
+      }
+    } catch { continue }
+  }
+
+  return `No quest found with name "${name}". Available files: ${yamlFiles.map(f => `"${f}"`).join(", ") || "(none)"}`
+}
+
 function loadQuestFromFile(file: string): { quest: Quest; path: string } | string {
   const resolved = resolveQuestFile(file)
   if (!resolved) return `No quest file found: ${AGENTS_DIR}/${file}`
@@ -431,21 +457,59 @@ export const QuestPlugin: Plugin = async ({ client }: any) => {
     },
 
     tool: {
-      quest_load: tool({
-        description: `Load a quest from ${AGENTS_DIR}/<file>.yaml. Pass the filename (with or without .yaml extension).`,
+      quest: tool({
+        description: `Start a quest. No args = help. Use file: to load by filename, name: to find by quest name, or schema: to create inline.`,
         args: {
-          file: z.string().describe(`Quest filename in ${AGENTS_DIR}/ (e.g. "deploy-feature" or "deploy-feature.yaml")`),
+          file: z.string().optional().describe(`Load from ${AGENTS_DIR}/name.yaml (matches filename).`),
+          name: z.string().optional().describe("Find and load a quest by its name field (case-insensitive, scans all .yaml files)."),
+          schema: z.record(z.string(), z.any()).optional().describe("Create inline from schema object."),
         },
-        execute: async (args: { file: string }) => {
-          const result = loadQuestFromFile(args.file.trim())
-          if (typeof result === "string") {
-            const files = listQuestFiles()
-            const hint = files.length > 0 ? ` Available files: ${files.join(", ")}` : ` No .yaml files in ${AGENTS_DIR}/.`
-            return result + hint
+        execute: async (args: { file?: string; name?: string; schema?: Record<string, any> }) => {
+          // ── file mode ──
+          if (args.file !== undefined && args.file !== "") {
+            const result = loadQuestFromFile(args.file.trim())
+            if (typeof result === "string") {
+              const files = listQuestFiles()
+              const hint = files.length > 0 ? ` Available files: ${files.join(", ")}` : ` No .yaml files in ${AGENTS_DIR}/.`
+              return result + hint
+            }
+            startQuest(result.quest)
+            return `Quest "${result.quest.name}" loaded from ${result.path}.\n\n${formatStageMessage(state!)}`
           }
 
-          startQuest(result.quest)
-          return `Quest "${result.quest.name}" loaded from ${result.path}.\n\n${formatStageMessage(state!)}`
+          // ── name mode ──
+          if (args.name !== undefined && args.name !== "") {
+            const result = resolveQuestByName(args.name.trim())
+            if (typeof result === "string") return result
+            startQuest(result.quest)
+            return `Quest "${result.quest.name}" loaded from ${result.path}.\n\n${formatStageMessage(state!)}`
+          }
+
+          // ── schema mode ──
+          if (args.schema !== undefined) {
+            const result = validateQuestSchema(args.schema)
+            if (typeof result === "string") return result
+            startQuest(result)
+            return `Quest "${result.name}" created.\n\n${formatStageMessage(state!)}`
+          }
+
+          // ── help mode ──
+          const files = listQuestFiles()
+          const fileList = files.length > 0
+            ? files.map(f => `  - ${f}`).join("\n")
+            : `  (no .yaml files in ${AGENTS_DIR}/)`
+          return `quest — start or manage a quest.
+
+Usage:
+  quest()                  → this help
+  quest(file: "filename")  → load from ${AGENTS_DIR}/filename.yaml
+  quest(name: "Quest Name")→ find by quest name (scans all files)
+  quest(schema: {...})     → create inline from schema object
+
+Available quest files:
+${fileList}
+
+Active quest commands: /quest [status|pause|resume|stop]`
         },
       }),
 
@@ -455,7 +519,7 @@ export const QuestPlugin: Plugin = async ({ client }: any) => {
           stage: z.string().describe("Stage id to advance to. Use 'done' on final stage."),
         },
         execute: async (args: { stage: string }) => {
-          if (!state) return "No active quest. Load one first with quest_load."
+          if (!state) return "No active quest. Use quest() to start one."
 
           const target = args.stage.trim()
           if (!isValidTransition(state, target)) {
@@ -474,20 +538,6 @@ export const QuestPlugin: Plugin = async ({ client }: any) => {
           state.currentStageId = target
           cancelDwell()
           return formatStageMessage(state)
-        },
-      }),
-
-      create_quest: tool({
-        description: `Create a quest inline from a schema object. Format: { kind: "quest", name: string, description?: string, context?: string, stages: [{ id: string, description?: string, instruction?: string, checklist?: string[], context?: string, next?: string | Record<string, string> }] }.`,
-        args: {
-          schema: z.record(z.string(), z.any()).describe("Quest schema object"),
-        },
-        execute: async (args: { schema: Record<string, any> }) => {
-          const result = validateQuestSchema(args.schema)
-          if (typeof result === "string") return result
-
-          startQuest(result)
-          return `Quest "${result.name}" created.\n\n${formatStageMessage(state!)}`
         },
       }),
     },
@@ -526,7 +576,7 @@ export const QuestPlugin: Plugin = async ({ client }: any) => {
 
       if (!args || args === "status") {
         if (!state) {
-          toast("No active quest.\nUse quest_load to start one.", "error")
+          toast("No active quest.\nUse quest() to start one.", "error")
           throw new Error(HANDLED)
         }
         const msg = formatStageMessage(state)
