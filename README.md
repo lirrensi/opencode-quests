@@ -1,24 +1,24 @@
-# opencode-workflows 🔒🪤✨
+# opencode-quests 🔒🪤✨
 
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**Linear stage enforcement for OpenCode.** No drifting. No forgetting. No escape.
+**Labeled multi-next state machine for OpenCode.** No drifting. No forgetting. No escape.
 
-Your agent follows a workflow defined in a simple YAML file. Each stage injects fresh context — instructions, checklist, next steps — right into the chat. The agent cannot skip stages. It cannot "be done" until every stage is complete. When it goes idle mid-workflow, the plugin fires a reminder. The workflow is the only reality.
+Your agent follows a quest defined in a simple YAML file (or inline). Each stage injects fresh context — instruction, checklist, next steps — right into the chat. The agent cannot skip stages. It cannot "be done" until the quest completes. When it goes idle mid-quest, the plugin fires a reminder. The quest is the only reality.
 
-> ⚠️ **This is not a suggestion system.** The plugin enforces workflow compliance structurally — not through prompting, not through "please remember to," but through a state machine that physically prevents the agent from proceeding without calling the gate.
+> ⚠️ **This is not a suggestion system.** The plugin enforces quest compliance structurally — not through prompting, not through "please remember to," but through a state machine that physically prevents the agent from proceeding without calling the gate.
 
 ---
 
-## Why Workflows? 🎯
+## Why Quests? 🎯
 
 Agents drift. They freelance. They "remember" the plan from 3000 tokens ago and quietly stop following it. They declare themselves done when they're not.
 
-**Workflows solve this with elegant brutality:** you cannot proceed without calling `workflow_advance()`. Each stage is a gate. Each gate requires explicit passage. The agent never sees the exit until the workflow says so.
+**Quests solve this with elegant brutality:** you (or the agent) cannot proceed without calling `quest_advance()`. Each stage is a gate. Each gate requires explicit passage. The agent never sees the exit until the quest says so.
 
-| Problem | How Workflows Fix It |
-|---------|---------------------|
-| Agent forgets the plan | Every stage injects fresh context — instructions, checklist, next step |
+| Problem | How Quests Fix It |
+|---------|-------------------|
+| Agent forgets the plan | Every stage injects fresh context — instruction, checklist, context, next steps |
 | Agent skips steps | State machine validates every transition — wrong stage → rejected |
 | Agent declares "done" prematurely | `session.idle` → 10s dwell → stage reminder injected. Can't escape |
 | Agent scope-creeps | Stage instructions are explicit. The checklist anchors focus |
@@ -30,20 +30,20 @@ Agents drift. They freelance. They "remember" the plan from 3000 tokens ago and 
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    Workflow Prison                       │
+│                     Quest Prison                         │
 │                                                          │
-│  workflow_load("deploy") → stage 1 injected              │
+│  quest(file: "deploy") → stage 1 injected                │
 │  agent works → finishes → session.idle                   │
 │       │                                                  │
-│       ├─ workflow complete? → release to user            │
+│       ├─ quest complete? → release to user               │
 │       └─ not complete? → 10s dwell → reminder injected   │
 │                                                          │
-│  agent calls workflow_advance("stage2")                  │
+│  agent calls quest_advance("implement")                  │
 │       │                                                  │
 │       ├─ valid transition? → stage 2 injected            │
-│       └─ wrong stage? → "Expected: stage2. Got: stage5"  │
+│       └─ wrong stage? → "Expected: implement. Got: fix"  │
 │                                                          │
-│  final stage → workflow_advance("done") → complete ✅    │
+│  final stage → quest_advance("done") → complete ✅       │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -56,86 +56,128 @@ The plugin operates at the **TUI layer** — it puppeteers the prompt box, injec
 Drop a `.yaml` file in `.agents/`:
 
 ```yaml
-kind: workflow
+# .agents/deploy-feature.yaml
+kind: quest
 name: Deploy Feature
 description: "Ship a feature safely: plan → implement → verify"
+context: >
+  Repo: opencode-plugins. Branch: feature branch.
+  CI: ~5min via GitHub Actions.
 
 stages:
   - id: plan
-    instruction: "Read the ticket. List files you'll touch. NO coding yet."
+    description: "Understand the problem space"
+    context: "Planning phase — analysis only, no coding."
+    instruction: >
+      Read the ticket/issue. Understand what needs to change.
+      List every file you expect to touch. NO coding yet.
     checklist:
       - "Ticket requirements understood"
       - "Affected files listed"
       - "Approach clear"
-    next: implement
+    next:
+      proceed: implement
+      rethink: plan          # ← self-loop, can stay and rethink
 
   - id: implement
+    description: "Write the actual code"
     instruction: "Write the code. Only what was planned. No scope creep."
     checklist:
       - "All planned files modified"
       - "No unplanned files touched"
       - "Code compiles"
-    next: verify
+    next:
+      done: verify
+      fix: plan              # ← back-edge, plan was wrong
 
   - id: verify
+    description: "Validate everything works"
     instruction: "Run tests. Review every change. Would you approve this PR?"
     checklist:
       - "All tests pass"
       - "No debug code left"
       - "Self-review passed"
-    # no `next` = final stage → workflow_advance("done") completes
+    # no `next` = final stage → quest_advance("done") completes
 ```
+
+### Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `kind` | `"quest"` | Yes | Must be `"quest"` |
+| `name` | string | Yes | Display name |
+| `description` | string | No | One-line tagline shown in header |
+| `context` | string | No | Operational facts repeated every message |
+| `stages` | Stage[] | Yes | Non-empty array of stages |
 
 ### Stage fields
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `id` | ✅ | Stage identifier (used in `workflow_advance`) |
-| `instruction` | ❌ | What the agent should do — injected as context |
-| `checklist` | ❌ | Array of focus items — shown as `☐` in the reminder |
-| `next` | ❌ | Next stage id. Omit on final stage. |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | Yes | Stage identifier (used in `quest_advance`) |
+| `description` | string | No | One-liner shown in stage header |
+| `instruction` | string | No | What the agent should do |
+| `checklist` | string[] | No | Items injected as `todowrite` directive |
+| `context` | string | No | Stage-specific operational data |
+| `next` | string \| Record | No | Exits. Omit on final stage. |
 
-Linear only — no branching. Want parallel tracks? Make separate workflows.
+### The `next` field
+
+**String form** — single exit:
+```yaml
+next: ship
+```
+Renders as `→ Next: ship`.
+
+**Record form** — labeled exits:
+```yaml
+next:
+  pass: ship
+  fail: fix
+  retry: verify
+```
+Renders as:
+```
+→ Options:
+   [pass]   → ship
+   [fail]   → fix
+   [retry]  → verify
+```
+
+**No `next`** — final stage. Renders as `→ Final stage. Call quest_advance("done") to complete.`
 
 ---
 
 ## Tools 🛠️
 
-### `workflow_load`
+### `quest`
+
+Loads an existing quest or creates one inline. Three modes:
+
+| Mode | Call | What it does |
+|------|------|-------------|
+| **By file** | `quest(file: "deploy-feature")` | Loads `.agents/deploy-feature.yaml` (`.yaml` extension optional) |
+| **By name** | `quest(name: "Deploy Feature")` | Scans all `.yaml` files in `.agents/` for matching `name:` field |
+| **Inline** | `quest(schema: { kind: "quest", ... })` | Creates inline from schema object |
+| **Help** | `quest()` | Shows available files and usage |
+
+When loaded, immediately injects the first stage context.
+
+→ Found: `Quest "Deploy Feature" loaded from .agents/deploy-feature.yaml.`
+→ Missing: lists available files or matching files
+
+### `quest_advance`
 
 ```
-workflow_load(file: string)
-
-Loads a workflow from .agents/<file>.yaml.
-Pass the filename with or without .yaml extension.
-Injects stage 1 context immediately.
-
-→ Found:    "Workflow 'Deploy Feature' loaded. Starting stage: plan"
-→ Missing:  "No workflow file found: .agents/bad-name"
-             (lists available files)
+quest_advance(stage: string)
 ```
-
-### `workflow_advance`
-
-```
-workflow_advance(stage: string)
 
 Advances to the given stage. State-machine validated.
 Plain string (not an enum) — cache-safe.
 
-→ Valid:     Injects next stage context
-→ Invalid:   "Cannot advance to 'verify'. Expected: 'implement'."
-→ Final:     workflow_advance("done") → completes, releases agent
-```
-
-### `create_workflow`
-
-```
-create_workflow(schema: object)
-
-Creates a workflow inline. Same format as YAML but passed as JSON.
-Starts immediately at stage 1.
-```
+→ Valid: Injects next stage context
+→ Invalid: `"Cannot advance to 'fix'. Expected one of: ['verify', 'plan']."`
+→ Final: `quest_advance("done")` → completes, releases agent
 
 ---
 
@@ -143,10 +185,10 @@ Starts immediately at stage 1.
 
 | Command | What it does |
 |---------|-------------|
-| `/workflow status` | Show current stage, instruction, checklist, next step |
-| `/workflow pause` | Suspend reminders — keep state, stop re-fire |
-| `/workflow resume` | Resume reminders — pick up where you left off |
-| `/workflow stop` | Clear the workflow entirely |
+| `/quest status` | Show current stage, instruction, checklist, next options |
+| `/quest pause` | Suspend reminders — keep state, stop re-fire |
+| `/quest resume` | Resume reminders — pick up where you left off |
+| `/quest stop` | Clear the quest entirely |
 
 ---
 
@@ -156,11 +198,14 @@ When a stage is loaded or a reminder fires, the agent receives:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Workflow: Deploy Feature
+Quest: Deploy Feature (implement — 2/3)
 Ship a feature safely: plan → implement → verify
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Stage: implement (2/3)
-
+📋 Context:
+   Repo: opencode-plugins. Branch: feature branch.
+   CI: ~5min via GitHub Actions.
+   Planning phase — analysis only, no coding.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Write the code. Only what was planned. No scope creep.
 
 Checklist (use todowrite to track):
@@ -169,8 +214,10 @@ Checklist (use todowrite to track):
   ☐ Code compiles
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-→ Next: verify
-  Call workflow_advance("verify") when ready.
+→ Options:
+   [done] → verify
+   [fix]  → plan
+  Call quest_advance("verify") or quest_advance("plan") when ready.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -180,7 +227,7 @@ On completion:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ Workflow Complete: Deploy Feature
+✅ Quest Complete: Deploy Feature
    3/3 stages finished.
    Started: 2m ago.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -188,61 +235,102 @@ On completion:
 
 ---
 
-## Design Principles 🔮
+## Design Patterns 🔮
 
-### 1. Structural enforcement, not instructional
+### Branching (choose your path)
+```yaml
+- id: decide
+  next:
+    simple: quick-fix
+    complex: full-plan
+```
 
-The agent cannot skip stages because the state machine rejects invalid transitions. It's not asked to follow the workflow — the workflow is the only path available.
+### Loop (retry until done)
+```yaml
+- id: test
+  next:
+    pass: ship
+    fail: fix
 
-### 2. Fresh context, every time
+- id: fix
+  next: test
+```
 
-Each stage injection carries the full context: what workflow, what stage, what instruction, what checklist, what's next. The agent never operates from memory.
+### Self-loop (stay and rethink)
+```yaml
+- id: plan
+  next:
+    proceed: implement
+    rethink: plan
+```
 
-### 3. Idle-driven persistence
+### Convergence (multiple paths to same target)
+```yaml
+- id: quick-fix
+  next: deploy
 
-When the agent finishes a turn but the workflow isn't done, a 10-second dwell timer fires. If no activity occurs, the stage reminder is injected as a new user message. The agent cannot "be done" — the plugin won't allow it.
+- id: full-plan
+  next: deploy
 
-### 4. Cache-stable tool schemas
+- id: deploy
+```
 
-All tool parameters are plain strings. No dynamic enums. No schema changes per workflow. The tool definitions are static forever — OpenCode's cache stays warm.
+---
 
-### 5. Zero prompt manipulation
+## Templates 📁
 
-The plugin never touches system prompts, agent instructions, or context injection hooks. It operates purely through TUI puppeteering — the same mechanism as typing a message and pressing Enter.
+14 reusable quest templates ship with the **quest-planner skill** in `.agents/skills/quest-planner/templates/`. Browse them with `quest()` or let the agent suggest one when you mention a matching task:
+
+| Template | Stages | Graph |
+|----------|--------|-------|
+| `review-pr.yaml` | 3 | approve/reject fork |
+| `deploy-feature.yaml` | 6 | proceed/abort/skip + failover |
+| `bug-fix.yaml` | 5 | reproduce/skip + escalate |
+| `code-audit.yaml` | 4 | pass/warn/fail → converge |
+| `planning.yaml` | 3 | proceed/rethink self-loop |
+| `research.yaml` | 4 | expand/ship back-edge |
+| `onboard-dev.yaml` | 5 | linear single path |
+| `pair-program.yaml` | 3 | follow/drive |
+| `incident-response.yaml` | 8 | **mitigate→verify loop + escalate** |
+| `refactor-pipeline.yaml` | 7 | **test→fix→retest cycle + cleanup** |
+| `release-train.yaml` | 8 | **3→1 diamond merge + rollback** |
+| `qa-cycle.yaml` | 6 | **triage→fix→retest loop + backlog** |
+| `learning-path.yaml` | 6 | **study→practice→study loop + capstone** |
+| `feature-flag.yaml` | 9 | **canary→evaluate→{promote,rollback}** |
 
 ---
 
 ## Install 📦
 
 ```bash
-git clone https://github.com/lirrensi/opencode-workflows.git
-cd opencode-workflows
+git clone https://github.com/lirrensi/opencode-quests.git
+cd opencode-quests
 pnpm install
 pnpm run deploy
 ```
 
-This installs a single-file plugin to `~/.config/opencode/plugins/opencode-workflows.ts`.
-OpenCode loads it automatically from there — restart to pick up changes.
+This installs a single-file plugin to `~/.config/opencode/plugins/opencode-quests.ts`.
+OpenCode loads it automatically — restart to pick up changes.
 
-Create a `.agents/` directory in your project, drop in a `.yaml` file with `kind: workflow`, and you're running.
+Create a `.agents/` directory in your project, drop in a `.yaml` file with `kind: quest`, and you're running.
 
 ---
 
 ## Development 🛠️
 
 ```sh
-git clone https://github.com/lirrensi/opencode-workflows
-cd opencode-workflows
+git clone https://github.com/lirrensi/opencode-quests
+cd opencode-quests
 pnpm install
 pnpm typecheck   # TypeScript check
-pnpm test        # 52 tests
+pnpm test        # 67 tests
 ```
 
 ---
 
 ## Architecture 🏗️
 
-Built on the shared `opencode-plugin-template` pattern (same DNA as [ChronoLoop](https://github.com/lirrensi/opencode-chronoloop) and [PowerGoal](https://github.com/lirrensi/opencode-powergoal)):
+Built on the shared `opencode-plugin-template` pattern:
 
 - **TUI puppeteering** — `clearPrompt → appendPrompt → submitPrompt`
 - **Dwell timer** — `session.idle → 10s → fire reminder`
