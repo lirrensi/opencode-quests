@@ -1,0 +1,113 @@
+# incident-response.yaml — Incident response with escalation & fix loop
+# Graph: detect → triage → mitigate → verify ⇄ mitigate | escalate → done
+kind: quest
+name: Incident Response
+description: "Respond to a production incident: triage, mitigate, verify, postmortem."
+
+stages:
+  - id: detect
+    description: "Acknowledge the incident"
+    instruction: >
+      Gather initial info:
+      - What's broken? (symptoms, not guesses)
+      - Who's affected? (users, services, revenue)
+      - Severity? (SEV1 = users blocked, SEV2 = degraded, SEV3 = cosmetic)
+      - Any obvious quick fix?
+    checklist:
+      - "Symptoms documented"
+      - "Impact assessed"
+      - "Severity level assigned"
+    next:
+      mitigate: triage
+      escalate: escalate
+
+  - id: triage
+    description: "Decide the path forward"
+    instruction: >
+      Based on the severity and impact, decide:
+      - **mitigate**: Apply a known fix or workaround now
+      - **monitor**: Low severity, watch and report
+      - **escalate**: Need a different team or on-call
+    checklist:
+      - "Decision made with rationale"
+    next:
+      mitigate: mitigate
+      monitor: monitor
+      escalate: escalate
+
+  - id: mitigate
+    description: "Apply the fix or workaround"
+    instruction: >
+      Apply the mitigation. This could be:
+      - Rolling back a deploy
+      - Toggling a feature flag
+      - Scaling up resources
+      - Patching a config
+
+      Fix first, understand root cause later.
+    checklist:
+      - "Mitigation applied"
+      - "Impact of fix confirmed (no regressions)"
+    next:
+      done: verify
+      failed: escalate
+
+  - id: verify
+    description: "Check if the fix worked"
+    instruction: >
+      Verify the mitigation resolved the issue:
+      - Health endpoints green?
+      - Error rate dropping?
+      - Users unblocked?
+    checklist:
+      - "Metrics checked and improving"
+      - "Tested the affected flow"
+    next:
+      resolved: resolve
+      still-broken: mitigate
+
+  - id: resolve
+    description: "Close the incident"
+    instruction: >
+      The incident is resolved. Close the incident ticket and notify stakeholders.
+      Don't forget to schedule the postmortem.
+    checklist:
+      - "Incident ticket closed"
+      - "Stakeholders notified"
+      - "Postmortem scheduled"
+    next:
+      learn: postmortem
+      skip: postmortem
+
+  - id: postmortem
+    description: "Learn from the incident"
+    instruction: >
+      Write a blameless postmortem:
+      - What happened? (timeline)
+      - Why did it happen? (root cause)
+      - What prevented faster detection? (monitoring gaps)
+      - Action items to prevent recurrence
+    checklist:
+      - "Timeline documented"
+      - "Root cause identified"
+      - "Action items with owners"
+      - "Postmortem shared with team"
+
+  - id: escalate
+    description: "Hand off to another team"
+    instruction: >
+      Document what you know and hand off to the right team.
+      Include all context gathered so far.
+    checklist:
+      - "Handoff document written"
+      - "Right team/person notified"
+      - "Ticket reassigned"
+
+  - id: monitor
+    description: "Watch and report"
+    instruction: >
+      Set up monitoring on the affected area. Report back in 30 minutes
+      if the issue persists or escalates.
+    checklist:
+      - "Monitoring dashboard checked"
+      - "Follow-up timer set"

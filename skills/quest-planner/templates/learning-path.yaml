@@ -1,0 +1,92 @@
+# learning-path.yaml — Adaptive learning journey with practice loops
+# Graph: assess → learn → {practice, study-more⇄practice} → next-topic → capstone
+kind: quest
+name: Learning Path
+description: "Adaptive learning: assess, learn, practice, loop until mastery, capstone."
+
+stages:
+  - id: assess
+    description: "Evaluate current knowledge"
+    instruction: >
+      Figure out what the learner already knows:
+      - Ask about prior experience with this topic
+      - Identify gaps and misconceptions
+      - Set a clear learning goal
+    checklist:
+      - "Prior knowledge assessed"
+      - "Learning goal set"
+      - "Prerequisites identified"
+    next:
+      ready: learn
+      prep: learn
+
+  - id: learn
+    description: "Study the concept"
+    instruction: >
+      Present the core concept:
+      - Explain the "why" first, then the "how"
+      - Use examples and analogies
+      - Check understanding with a quick question
+    checklist:
+      - "Core concept explained"
+      - "Examples given"
+      - "Understanding checked"
+    next:
+      practice: practice
+      review: study-more
+
+  - id: study-more
+    description: "Reinforce weak areas"
+    instruction: >
+      The learner needs more foundation. Try:
+      - A different explanation or perspective
+      - Breaking the concept into smaller pieces
+      - Relating it to something they already know
+    checklist:
+      - "Alternative explanation given"
+      - "Smaller chunks presented"
+      - "Ready for practice attempt"
+    next:
+      try-again: practice
+
+  - id: practice
+    description: "Apply the concept hands-on"
+    instruction: >
+      Give the learner a real exercise:
+      - Start with a guided example
+      - Then a similar problem to solve independently
+      - Provide hints if stuck, but let them struggle a bit
+    checklist:
+      - "Guided example completed"
+      - "Independent problem attempted"
+      - "Feedback given on solution"
+    next:
+      pass: next-topic
+      stuck: study-more
+      close: next-topic
+
+  - id: next-topic
+    description: "Chain to the next concept"
+    instruction: >
+      The learner has demonstrated understanding.
+      Decide what's next:
+      - Next topic in the curriculum?
+      - Deeper dive into this topic?
+      - Capstone project?
+    checklist:
+      - "Mastery confirmed"
+      - "Next topic selected"
+    next:
+      continue: learn
+      capstone: capstone
+
+  - id: capstone
+    description: "Final project"
+    instruction: >
+      Assign a capstone that ties everything together.
+      It should require applying multiple concepts.
+      Evaluate the result and give constructive feedback.
+    checklist:
+      - "Capstone assigned"
+      - "Result evaluated"
+      - "Feedback delivered"

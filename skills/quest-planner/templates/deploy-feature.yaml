@@ -1,0 +1,71 @@
+# deploy-feature.yaml — Feature release pipeline
+kind: quest
+name: Deploy Feature
+description: "Ship a feature from code complete to production."
+
+stages:
+  - id: verify-readiness
+    description: "Pre-flight checks before deploy"
+    instruction: >
+      Run the pre-deploy checklist. If anything is red, abort.
+    checklist:
+      - "All tests pass (unit + integration)"
+      - "No lint errors or warnings"
+      - "CHANGELOG updated"
+      - "Version bumped if applicable"
+    next:
+      proceed: build
+      abort: blocked
+
+  - id: build
+    description: "Build and package the release"
+    instruction: >
+      Create the production build. Tag the commit and push the tag.
+    checklist:
+      - "Production build succeeds"
+      - "Git tag pushed"
+      - "Build artifact verified"
+    next:
+      ship: staging
+      skip: cleanup
+
+  - id: staging
+    description: "Deploy to staging and smoke-test"
+    instruction: >
+      Deploy to the staging environment. Run the smoke test suite.
+      Check the health endpoint and a critical user flow.
+    checklist:
+      - "Deployed to staging"
+      - "Smoke tests pass"
+      - "Health endpoint green"
+    next:
+      promote: cleanup
+      rollback: rollback
+
+  - id: cleanup
+    description: "Post-deploy cleanup"
+    instruction: >
+      Remove the feature branch locally and on remote.
+      Update the deployment tracker if one exists.
+    checklist:
+      - "Branch deleted locally"
+      - "Branch deleted on remote"
+      - "Deploy tracker updated"
+
+  - id: blocked
+    description: "Blocked — cannot deploy"
+    instruction: >
+      Document what's blocking the release. Create or link to the issue.
+      No code changes — just reporting.
+    checklist:
+      - "Blocking issue documented"
+
+  - id: rollback
+    description: "Rollback staging deploy"
+    instruction: >
+      Revert the staging deploy to the previous version.
+      Tag the rollback commit for traceability.
+    checklist:
+      - "Staging rolled back"
+      - "Rollback tagged"
+      - "Root cause documented in issue"

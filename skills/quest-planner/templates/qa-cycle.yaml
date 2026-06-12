@@ -1,0 +1,87 @@
+# qa-cycle.yaml — QA pipeline with bug triage and fix-retest loop
+# Graph: plan → run → {pass→report, fail→triage→{critical→fix→retest, minor→backlog}}→report
+kind: quest
+name: QA Cycle
+description: "Run tests, triage failures, loop on fixes, report results."
+
+stages:
+  - id: plan
+    description: "Plan the testing scope"
+    instruction: >
+      Define what we're testing:
+      - Which features/modules?
+      - Regression scope?
+      - Manual vs automated?
+      - Environment (staging, preview, local?)
+    checklist:
+      - "Test scope defined"
+      - "Environments listed"
+      - "Test types identified (unit/integration/e2e/manual)"
+    next:
+      execute: run
+      expand: plan
+
+  - id: run
+    description: "Execute the test plan"
+    instruction: >
+      Run the planned tests. Log every result.
+      If a test fails, capture the failure output and context.
+    checklist:
+      - "All tests executed"
+      - "Pass/fail logged per test"
+      - "Failure context captured (logs, screenshots)"
+    next:
+      pass: report
+      fail: triage
+
+  - id: triage
+    description: "Categorize failures"
+    instruction: >
+      For each failure, determine:
+      - **critical**: blocks release, must fix now
+      - **minor**: cosmetic, edge case, low impact
+      - **false-positive**: test flake or env issue
+    checklist:
+      - "All failures triaged"
+      - "Severity assigned per failure"
+    next:
+      critical: fix
+      minor: backlog
+      flake: run
+
+  - id: fix
+    description: "Fix a critical bug"
+    instruction: >
+      Fix the bug. Write or update a test that catches it.
+      Then re-run the full suite.
+    checklist:
+      - "Bug fixed"
+      - "Regression test added/updated"
+      - "Re-running tests"
+    next:
+      retest: run
+
+  - id: backlog
+    description: "Log minor issues to backlog"
+    instruction: >
+      Write a clear ticket for each minor issue.
+      Include reproduction steps, severity, and suggested fix.
+    checklist:
+      - "Tickets created for all minor issues"
+      - "Priority assigned"
+      - "Linked to epic if applicable"
+    next:
+      done: report
+
+  - id: report
+    description: "Write the QA report"
+    instruction: >
+      Summarize the testing cycle:
+      - Pass rate (X/Y tests passing)
+      - Critical bugs found and fixed
+      - Minor bugs backlogged
+      - Release recommendation (go / no-go)
+    checklist:
+      - "Pass rate documented"
+      - "Bug counts by severity"
+      - "Release recommendation stated"

@@ -1,0 +1,62 @@
+# code-audit.yaml — Code quality audit
+kind: quest
+name: Code Audit
+description: "Audit a codebase or module for quality, security, and style."
+
+stages:
+  - id: scope
+    description: "Define the audit scope"
+    instruction: >
+      Clarify what's being audited:
+      - Which files or modules?
+      - What's the focus? (security, style, performance, all?)
+      - Any specific concerns from the team?
+    checklist:
+      - "Audit scope defined"
+      - "Focus areas agreed"
+    next:
+      proceed: static-analysis
+      narrow: scope
+
+  - id: static-analysis
+    description: "Automated checks first"
+    instruction: >
+      Run linters, formatters, and security scanners.
+      Document any warnings or errors.
+    checklist:
+      - "Linter run — issues documented"
+      - "Security scan run — issues documented"
+      - "Type checker run — issues documented"
+    next:
+      pass: manual-review
+      warn: manual-review
+
+  - id: manual-review
+    description: "Human-level code inspection"
+    instruction: >
+      Read through the code. Look for:
+      - Logic errors the linter can't catch
+      - Architectural issues (coupling, cohesion)
+      - Performance bottlenecks
+      - Missing error handling
+      - Security holes (injection, auth, data exposure)
+    checklist:
+      - "All files within scope reviewed"
+      - "Issues categorized (critical/major/minor)"
+    next:
+      pass: report
+      warn: report
+      fail: report
+
+  - id: report
+    description: "Write the audit report"
+    instruction: >
+      Compile findings into a clear report:
+      - Summary (how bad is it?)
+      - Critical issues (fix immediately)
+      - Major issues (fix this sprint)
+      - Minor issues (nice-to-haves)
+    checklist:
+      - "Report written with severity levels"
+      - "Action items prioritized"
+      - "Report shared with the team"

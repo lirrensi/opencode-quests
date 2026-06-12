@@ -1,0 +1,61 @@
+# bug-fix.yaml — Bug triage & fix
+kind: quest
+name: Fix Bug
+description: "Reproduce, diagnose, and fix a reported bug."
+
+stages:
+  - id: reproduce
+    description: "Confirm the bug exists"
+    instruction: >
+      Read the bug report carefully. Try to reproduce the behavior.
+      If you can't reproduce, note the environment differences and ask for more info.
+    checklist:
+      - "Bug reproduced in current environment"
+      - "Steps to reproduce documented"
+    next:
+      reproduce: root-cause
+      cant-repro: request-info
+
+  - id: request-info
+    description: "Ask for more details"
+    instruction: >
+      Ask the reporter for specific details:
+      - Exact steps (not vague)
+      - Environment (OS, browser, version)
+      - Screenshots or logs if available
+    checklist:
+      - "Information requested"
+      - "Ticket tagged needs-info"
+
+  - id: root-cause
+    description: "Find the underlying cause"
+    instruction: >
+      Investigate the code. Find where the bug originates.
+      Don't fix yet — just understand the root cause.
+    checklist:
+      - "Root cause identified"
+      - "Affected files listed"
+      - "Fix approach planned"
+    next:
+      fix: fix-it
+      escalate: escalate
+
+  - id: fix-it
+    description: "Write and verify the fix"
+    instruction: >
+      Write the fix. Add a test that catches the bug.
+      Run the full test suite to make sure nothing broke.
+    checklist:
+      - "Fix written"
+      - "Regression test added"
+      - "All tests pass"
+      - "PR description includes root cause"
+
+  - id: escalate
+    description: "Escalate to senior/team"
+    instruction: >
+      Summarize the bug, your investigation so far, and why it needs escalation.
+      Tag the relevant team or person.
+    checklist:
+      - "Escalation written with findings"
+      - "Appropriate team/person tagged"

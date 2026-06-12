@@ -1,0 +1,122 @@
+# feature-flag.yaml — Gradual rollout with canary evaluation loop
+# Graph: develop → enable-dev → test → {pass→canary→evaluate→{promote→rollout, rollback→disable}, fail→fix→test}
+kind: quest
+name: Feature Flag Rollout
+description: "Gradual rollout with canary, evaluate loop, and rollback."
+
+stages:
+  - id: develop
+    description: "Implement the feature behind a flag"
+    instruction: >
+      Write the feature behind a toggle. The flag must:
+      - Default to OFF in production
+      - Be runtime-configurable (no deploy to toggle)
+      - Have a metric to measure impact
+    checklist:
+      - "Feature implemented behind flag"
+      - "Flag defaults to OFF"
+      - "Impact metric defined"
+    next:
+      ready: enable-dev
+
+  - id: enable-dev
+    description: "Enable on dev environment"
+    instruction: >
+      Turn the flag ON in dev. Verify the feature works
+      and doesn't break existing functionality.
+    checklist:
+      - "Flag ON in dev"
+      - "Feature working"
+      - "No regressions detected"
+    next:
+      test: test
+
+  - id: test
+    description: "Full QA pass"
+    instruction: >
+      Run the full test suite with the flag ON.
+      Check both the new feature and unaffected paths.
+    checklist:
+      - "Test suite green with flag ON"
+      - "New feature tests pass"
+      - "Regression tests pass"
+    next:
+      pass: canary
+      fail: fix
+
+  - id: fix
+    description: "Fix flag-related bugs"
+    instruction: >
+      The feature breaks something under the flag. Fix the issue.
+      If the flag itself is the problem, fix that.
+    checklist:
+      - "Bug diagnosed"
+      - "Fix applied"
+      - "Flag behavior corrected"
+    next:
+      retest: test
+
+  - id: canary
+    description: "Deploy to canary (1% of users)"
+    instruction: >
+      Deploy with the flag ON for 1% of users.
+      Monitor the impact metric for 15 minutes.
+      Look for: error rate, latency, user behavior change.
+    checklist:
+      - "Canary deployed to 1%"
+      - "15-minute monitoring window"
+      - "Impact metric recorded"
+    next:
+      promote: evaluate
+      rollback: evaluate
+
+  - id: evaluate
+    description: "Canary evaluation decision"
+    instruction: >
+      Based on canary data, decide:
+      - **promote**: Metrics look good, expand to 100%
+      - **rollback**: Something's wrong, disable the flag
+    checklist:
+      - "Canary data analyzed"
+      - "Decision made with evidence"
+    next:
+      promote: rollout
+      rollback: disable
+
+  - id: rollout
+    description: "Gradually increase to 100%"
+    instruction: >
+      Ramp up the flag: 10% → 25% → 50% → 100%.
+      Monitor for 5 minutes after each step.
+      If any metric degrades at any step, stop and rollback.
+    checklist:
+      - "10% ramp — metrics green"
+      - "25% ramp — metrics green"
+      - "50% ramp — metrics green"
+      - "100% rollout — metrics green"
+    next:
+      done: ship
+
+  - id: ship
+    description: "Stable rollout, clean up"
+    instruction: >
+      The feature is fully rolled out. Now:
+      - Remove the flag condition (flag is always ON)
+      - Keep the flag in code but set default to ON
+      - Document the rollout for the team
+    checklist:
+      - "Feature fully rolled out"
+      - "Flag default updated to ON"
+      - "Rollout documented"
+
+  - id: disable
+    description: "Disable the flag, roll back"
+    instruction: >
+      Turn the flag OFF everywhere.
+      Revert the feature code or leave it behind the flag.
+      Document why the rollout failed.
+    checklist:
+      - "Flag disabled in all environments"
+      - "Feature code reverted or behind flag"
+      - "Failure documented"
+      - "Follow-up ticket created"

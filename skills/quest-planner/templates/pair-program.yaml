@@ -1,0 +1,46 @@
+# pair-program.yaml — One-shot paired coding session
+kind: quest
+name: Pair Program
+description: "Drive or follow in a focused pair programming session."
+
+stages:
+  - id: setup
+    description: "Agree on the session structure"
+    instruction: >
+      Before writing code, agree on:
+      - Goal (what are we building/fixing?)
+      - Timebox (how long?)
+      - Roles (who drives first? timer to swap?)
+    checklist:
+      - "Goal defined"
+      - "Timebox set"
+      - "Roles agreed"
+    next:
+      drive: coding
+      follow: coding
+
+  - id: coding
+    description: "Write code together"
+    instruction: >
+      If you're **driving**: write the code. Talk through your thinking.
+      If you're **following**: watch, ask questions, catch mistakes,
+      and think a few steps ahead.
+
+      Swap roles at the timebox boundary.
+    checklist:
+      - "Code written toward the goal"
+      - "Both roles participated"
+      - "Tests pass on each meaningful checkpoint"
+    next:
+      done: wrap
+      keep-going: coding
+
+  - id: wrap
+    description: "Commit and review"
+    instruction: >
+      Commit the work. Write a descriptive commit message.
+      Review the diff together one last time before closing.
+    checklist:
+      - "Changes committed with good message"
+      - "Final review complete"
+      - "Session notes documented (for tomorrow)"

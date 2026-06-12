@@ -1,0 +1,109 @@
+# release-train.yaml — Multi-track release with diamond merge
+# Graph: prepare → {feature, hotfix, experiment} → merge → staging → ship
+kind: quest
+name: Release Train
+description: "Multi-track release: parallel branches converge into a single staging deploy."
+
+stages:
+  - id: prepare
+    description: "Prep each track's artifacts"
+    instruction: >
+      Three tracks are running in parallel. Read all three:
+
+      **feature** — planned feature for this release cycle
+      **hotfix** — urgent production fix
+      **experiment** — optional change, safe to drop
+
+      Assess each. Note any conflicts or dependencies between them.
+    checklist:
+      - "Feature track assessed"
+      - "Hotfix track assessed"
+      - "Experiment track assessed"
+      - "Cross-track conflicts identified"
+    next:
+      feature: feature-track
+      hotfix: hotfix-track
+      experiment: experiment-track
+
+  - id: feature-track
+    description: "Validate the feature track"
+    instruction: >
+      Check the feature branch:
+      - Code reviewed?
+      - Tests passing?
+      - Docs updated?
+    checklist:
+      - "Feature branch reviewed"
+      - "Tests green"
+      - "Docs current"
+    next:
+      merge: merge
+
+  - id: hotfix-track
+    description: "Validate the hotfix track"
+    instruction: >
+      Check the hotfix branch. Hotfixes skip the normal queue
+      but still need basic validation.
+    checklist:
+      - "Hotfix tested"
+      - "No side effects on feature"
+    next:
+      merge: merge
+      block: prepare
+
+  - id: experiment-track
+    description: "Validate the experiment track"
+    instruction: >
+      Check the experiment branch. If it's not ready, drop it.
+      Experiments can always ride the next train.
+    checklist:
+      - "Experiment reviewed"
+      - "Decision: ship or drop"
+    next:
+      merge: merge
+      drop: merge
+
+  - id: merge
+    description: "Merge all tracks into staging"
+    instruction: >
+      Merge the validated tracks into the staging branch.
+      Resolve merge conflicts if any.
+    checklist:
+      - "All go-tracks merged"
+      - "Merge conflicts resolved"
+      - "Staging branch pushed"
+    next:
+      deploy: staging
+
+  - id: staging
+    description: "Deploy to staging and smoke-test"
+    instruction: >
+      Deploy to staging. Run the full smoke suite.
+      Check the main user flows end-to-end.
+    checklist:
+      - "Deployed to staging"
+      - "Smoke tests pass"
+      - "End-to-end flow checked"
+    next:
+      ship: ship
+      rollback: rollback
+
+  - id: ship
+    description: "Release to production"
+    instruction: >
+      Deploy to production. Monitor for the first 5 minutes.
+      Announce the release in the team channel.
+    checklist:
+      - "Deployed to production"
+      - "Initial metrics green"
+      - "Release announced"
+
+  - id: rollback
+    description: "Rollback staging"
+    instruction: >
+      Revert the staging branch to the previous release.
+      Investigate the failure.
+    checklist:
+      - "Staging reverted"
+      - "Failure root-caused"
+      - "Fix scheduled"

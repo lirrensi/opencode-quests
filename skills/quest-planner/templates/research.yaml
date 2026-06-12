@@ -1,0 +1,61 @@
+# research.yaml — Multi-source research brief
+kind: quest
+name: Research
+description: "Gather, synthesize, and report findings from multiple sources."
+
+stages:
+  - id: define
+    description: "Scope the research question"
+    instruction: >
+      What exactly are we researching? Define:
+      - Research question (specific, not vague)
+      - Sources to check (docs, repos, articles)
+      - Output format (brief, comparison table, recommendation)
+    checklist:
+      - "Research question defined"
+      - "Sources identified"
+      - "Output format agreed"
+    next:
+      proceed: gather
+      narrow: define
+
+  - id: gather
+    description: "Collect information from sources"
+    instruction: >
+      Visit each source. Take structured notes:
+      - What did you learn?
+      - How reliable is the source?
+      - How does it relate to the research question?
+    checklist:
+      - "All sources visited"
+      - "Notes taken per source"
+      - "Conflicting info flagged"
+    next:
+      synthesize: synthesize
+      more-sources: gather
+
+  - id: synthesize
+    description: "Write the research brief"
+    instruction: >
+      Combine your findings into a coherent brief:
+      - Executive summary (1-2 sentences)
+      - Key findings (bullet points)
+      - Conflicting information (if any)
+      - Recommendation (if applicable)
+    checklist:
+      - "Executive summary written"
+      - "Key findings documented"
+      - "Conflicts called out"
+      - "Recommendation stated"
+    next:
+      ship: done
+      expand: gather
+
+  - id: done
+    description: "Present findings"
+    instruction: >
+      Share the completed brief with the user.
+      Be ready to dive deeper on any finding.
+    checklist:
+      - "Brief presented"
+      - "Open questions surfaced"

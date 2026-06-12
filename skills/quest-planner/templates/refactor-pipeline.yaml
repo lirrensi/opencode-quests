@@ -1,0 +1,100 @@
+# refactor-pipeline.yaml — Refactor with test feedback loop
+# Graph: analyze → plan → implement → test → fix ⇄ test | cleanup → verify
+kind: quest
+name: Refactor Code
+description: "Refactor code with a test-fix-retest loop until green."
+
+stages:
+  - id: analyze
+    description: "Understand the code to refactor"
+    instruction: >
+      Read the target code carefully. Understand:
+      - What does it do? (contract, not implementation)
+      - What are the edge cases?
+      - What tests cover it?
+      - What's the actual smell or pain point?
+    checklist:
+      - "Code behavior understood"
+      - "Existing tests identified"
+      - "Refactoring goal stated"
+    next:
+      proceed: plan
+      need-deeper: analyze
+
+  - id: plan
+    description: "Design the refactor"
+    instruction: >
+      Sketch the new structure. Identify:
+      - Extract/rename candidates
+      - Interface changes
+      - New tests needed
+      - Migration strategy (canary vs big bang)
+    checklist:
+      - "New structure sketched"
+      - "Interface changes listed"
+      - "Test plan written"
+    next:
+      proceed: implement
+      rethink: analyze
+
+  - id: implement
+    description: "Write the new code"
+    instruction: >
+      Apply the refactoring. Keep it incremental:
+      - One change at a time
+      - Commit after each safe step
+      - Don't mix refactor with feature work
+    checklist:
+      - "All planned changes applied"
+      - "Each step committed separately"
+      - "No scope creep"
+    next:
+      test: test
+      abort: analyze
+
+  - id: test
+    description: "Run the full suite"
+    instruction: >
+      Run all tests. If any fail, fix the issue and loop back.
+      If tests pass, move to cleanup.
+    checklist:
+      - "Full test suite run"
+    next:
+      pass: cleanup
+      fail: fix
+
+  - id: fix
+    description: "Fix failing tests"
+    instruction: >
+      Investigate the failing test. Is the test wrong or the code?
+      Fix accordingly, then re-test.
+    checklist:
+      - "Root cause of failure found"
+      - "Fix applied"
+    next:
+      retest: test
+
+  - id: cleanup
+    description: "Remove dead code and deprecations"
+    instruction: >
+      Clean up after the refactor:
+      - Remove deprecated code paths
+      - Update imports and re-exports
+      - Delete unused files
+    checklist:
+      - "Deprecated code removed"
+      - "Imports updated"
+      - "No dead exports left"
+    next:
+      verify: verify
+      oops: test
+
+  - id: verify
+    description: "Final sanity check"
+    instruction: >
+      Run the test suite one last time. Check that the public API
+      hasn't changed if that was a constraint. Review the diff holistically.
+    checklist:
+      - "Final test suite green"
+      - "API contract preserved (if required)"
+      - "Diff reviewed end-to-end"

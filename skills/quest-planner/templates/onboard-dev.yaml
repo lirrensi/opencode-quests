@@ -1,0 +1,78 @@
+# onboard-dev.yaml — New developer setup (linear)
+kind: quest
+name: Onboard Developer
+description: "Set up a new developer with access, tools, and context."
+
+stages:
+  - id: accounts
+    description: "Grant access and create accounts"
+    instruction: >
+      Ensure the developer has access to:
+      - GitHub org and repos
+      - CI/CD platform
+      - Package registry
+      - Cloud/production accounts (read-only initially)
+      - Communication channels
+    checklist:
+      - "GitHub access granted"
+      - "CI/CD access granted"
+      - "Package registry access granted"
+      - "Cloud accounts provisioned"
+      - "Slack/Discord channels joined"
+    next: repos
+
+  - id: repos
+    description: "Clone repos and set up local env"
+    instruction: >
+      Help the developer:
+      - Clone the main repos
+      - Install dependencies (as per each repo's README)
+      - Verify local build works
+      - Configure pre-commit hooks if any
+    checklist:
+      - "Main repos cloned"
+      - "Dependencies installed"
+      - "Local build verified for each repo"
+      - "Pre-commit hooks configured"
+    next: docs
+
+  - id: docs
+    description: "Walk through documentation"
+    instruction: >
+      Guide the developer through:
+      - Architecture overview
+      - Coding conventions
+      - PR workflow (branch → commit → PR → review → merge)
+      - Release process (how code goes to production)
+    checklist:
+      - "Architecture overview reviewed"
+      - "Coding conventions understood"
+      - "PR workflow demonstrated"
+      - "Release process explained"
+    next: first-task
+
+  - id: first-task
+    description: "Pair on the first task"
+    instruction: >
+      Pick a small, well-scoped task. Walk through:
+      - Reading the ticket
+      - Finding the relevant code
+      - Making the change
+      - Creating a PR
+    checklist:
+      - "First task completed"
+      - "PR created and submitted"
+      - "Developer comfortable with workflow"
+    next: retro
+
+  - id: retro
+    description: "Retro and open questions"
+    instruction: >
+      Ask the developer:
+      - What was confusing?
+      - What's still unclear?
+      - What would have made onboarding smoother?
+    checklist:
+      - "Onboarding retro conducted"
+      - "Feedback documented"
+      - "Improvement suggestions shared with team"

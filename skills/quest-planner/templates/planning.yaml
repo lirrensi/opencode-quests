@@ -1,0 +1,49 @@
+# planning.yaml — Investigation & proposal
+kind: quest
+name: Plan
+description: "Investigate a problem and produce a plan of action."
+
+stages:
+  - id: investigate
+    description: "Understand the problem"
+    instruction: >
+      Read the request carefully. Identify:
+      - What is the actual goal?
+      - What constraints exist?
+      - What don't we know yet?
+
+      Gather information before proposing anything.
+    checklist:
+      - "Problem understood and restated"
+      - "Constraints identified"
+      - "Unknowns listed"
+    next:
+      proceed: propose
+      need-more: investigate
+
+  - id: propose
+    description: "Write a plan"
+    instruction: >
+      Based on your investigation, write a plan:
+      - Approach (how you'll do it)
+      - Files affected
+      - Risks and mitigations
+      - Estimated effort (small/medium/large)
+    checklist:
+      - "Approach documented"
+      - "Files listed"
+      - "Risks called out"
+      - "Effort estimated"
+    next:
+      approve: ship
+      rethink: investigate
+
+  - id: ship
+    description: "Execute the plan"
+    instruction: >
+      The plan is approved. Execute it.
+      Follow the approach you outlined — no scope creep.
+    checklist:
+      - "Plan executed"
+      - "Changes committed"
+      - "Tests passing"

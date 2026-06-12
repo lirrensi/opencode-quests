@@ -1,0 +1,42 @@
+# review-pr.yaml — Pull request review
+kind: quest
+name: Review PR
+description: "Review a pull request and either approve or request changes."
+
+stages:
+  - id: review
+    description: "Read through the PR diff"
+    instruction: >
+      Review the pull request. Check for:
+      - Correctness: logic errors, edge cases, off-by-one
+      - Style: naming, formatting, code organization
+      - Safety: injection, auth, data validation
+      - Tests: are new functions tested?
+
+      Leave inline comments on anything concerning.
+    checklist:
+      - "All files reviewed"
+      - "Comments left where needed"
+      - "Overall assessment: approve or changes requested"
+    next:
+      approve: approve
+      changes: changes
+
+  - id: approve
+    description: "Green light the PR"
+    instruction: >
+      Confirm CI is green, approve the PR, and squash-merge.
+      Delete the branch after merging.
+    checklist:
+      - "CI passing"
+      - "PR approved on platform"
+      - "Branch merged and deleted"
+
+  - id: changes
+    description: "Request changes from the author"
+    instruction: >
+      Summarize the changes needed in a clear comment on the PR.
+      Be specific about what to fix and why.
+    checklist:
+      - "Changes requested with clear explanation"
+      - "Linked to specific lines where possible"
